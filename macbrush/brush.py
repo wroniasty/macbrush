@@ -27,3 +27,15 @@ class FdbTable(tables.Table, tables.MACTableIndex):
 
     def __init__(self):
         super(FdbTable, self).__init__((1,3,6,1,2,1,17,4,3,1))
+
+
+class Dot1dBasePort(tables.Table, tables.IntegerTableIndex):
+
+    _IndexSize = 1
+
+    Port = tables.TableIntegerField(1)
+    IfIndex = tables.TableIntegerField(2)
+
+
+    def __init__(self):
+        super(Dot1dBasePort, self).__init__((1,3,6,1,2,1,17,1,4,1))
