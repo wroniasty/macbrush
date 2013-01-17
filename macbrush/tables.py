@@ -117,7 +117,10 @@ class Table(object):
 
     def field_value(self, idx, value):
         if idx in self.table_field_index:
-            return self.table_field_index[idx].value(value)
+            try:
+                return self.table_field_index[idx].value(value)
+            except TypeError:
+                return None
         return value
 
     def insert(self, oid, value):

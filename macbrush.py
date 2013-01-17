@@ -8,6 +8,7 @@ class MacMapperDevice(Agent):
 
     def __init__(self, ip):
         super(MacMapperDevice, self).__init__(ip)
+        self.target_ip = ip
         self.mapper_deferred = defer.Deferred()
 
     def run_mapper(self):
@@ -18,16 +19,23 @@ class MacMapperDevice(Agent):
             ("port1dBase", Dot1dBasePort())
         ])
         d.addCallback(self.on_mapping_done)
+        print "RUN", d
         return self.mapper_deferred
 
     def on_mapping_done(self, results):
-        if results:
-            print "DONE", self.ip
-            self.mapper_deferred.callback(self)
-        else:
-            print "DONE with FAILURE"
-            self.mapper_deferred.errback(self)
-        self.close()
+        try:
+            if results:
+                print "DONE", self.target_ip
+                self.mapper_deferred.callback( (self, results) )
+            else:
+                print "DONE with FAILURE"
+                self.mapper_deferred.errback(self)
+        except Exception, e:
+            print "Error", e
+            self.mapper_deferred.errback( (self, e) )
+        finally:
+            pass
+            self.close()
 
 
 
@@ -38,7 +46,8 @@ def main(argv):
     #d = agent.run_mapper()
     #d.addCallback(process_results)
 
-    def process_results(result):
+    def process_results(data):
+        agent, result = data
         if not result:
             print "ERROR"
         else:
@@ -47,8 +56,10 @@ def main(argv):
                 port1d = result["port1dBase"].get(fdbEntry["Port"], None)
                 #port = result["interfaces"].get( result["port1dBase"].get(fdbEntry["Port"], None), None)
                 interface = result["interfaces"].get(port1d["IfIndex"], {})
-                print fdbEntry["PhysAddress"], fdbEntry["Port"], interface.get("Desc", "-")
+                #print fdbEntry["PhysAddress"], fdbEntry["Port"], interface.get("Desc", "-")
 
+
+    map(lambda d: d.addCallback(process_results), deferreds)
 
     try:
         reactor.run()
